@@ -54,6 +54,23 @@
     color: #384252;
 }
 
+.input-file:hover .input-file-btn {
+    background-color: #f3f4f6;
+    border: 1px solid #d0d5dc;
+}
+
+.input-file:focus .input-file-btn {
+    background-color: transparent;
+    box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.input-file input[type=file]:disabled+.input-file-btn {
+    background-color: transparent;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.02);
+    color: #9ca3b0;
+}
+
 .input-file-text {
     padding: 0 16px;
     font-family: "Inter";
@@ -77,4 +94,9 @@
     font-size: 13px;
     line-height: 120%;
     color: #6b7280;
+}
+
+.error {
+    display: block;
+    color: red;
 }
