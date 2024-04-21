@@ -11,22 +11,28 @@
         hidden
       />
 
-      <FileInputButton @click="handleFileInputButtonClick">{{
+      <FileInputButton @click="handleFileInputButtonClick" :disabled="disabled">{{
         fileInputButtonText
       }}</FileInputButton>
-
-      <div v-if="fileRef" class="selected-file-info">
-        <span>{{ fileRef.name }}</span>
+      <div class="flex flex-row gap-2" :class="{ disabled }">
+        <span v-if="fileInputButtonText === 'Отменить'" class="loader" />
+        <div v-if="fileRef">
+          <span>{{ fileRef.name }}</span>
+        </div>
+        <div v-else>{{ noFileChosenLabel }}</div>
       </div>
-      <div v-else>{{ noFileChosenLabel }}</div>
     </div>
-    <p class="hint-text">{{ hintText }}</p>
+    <p class="hint-text" :class="{ error: fileInputHintText === 'Error message' }">
+      {{ fileInputHintText }}
+    </p>
   </div>
 </template>
 
 <script setup lang="ts">
 import FileInputButton from './FileInputButton.vue'
 import { ref } from 'vue'
+
+// TODO: add enum or internal button state instead of button text mapping
 
 const props = defineProps({
   label: {
@@ -53,21 +59,63 @@ const fileInputRef = ref<HTMLInputElement | null>(null)
 const fileRef = ref<File | null>(null)
 const fileInputButtonText = ref(props.label)
 const fileInputHintText = ref<string>(props.hintText)
+let controller: AbortController
 
 function handleFileInputButtonClick() {
-  fileRef.value ? cancelablePromise.cancel() : fileInputRef.value?.click()
+  fileInputHintText.value = props.hintText
+
+  switch (fileInputButtonText.value) {
+    case 'Удалить':
+      fileInputButtonText.value = 'Выбрать файл'
+      fileRef.value = null
+      fileInputRef.value.value = null
+      break
+
+    case 'Отменить':
+      controller.abort()
+      fileInputButtonText.value = 'Выбрать файл'
+      fileRef.value = null
+      fileInputRef.value.value = null
+      break
+
+    case 'Выбрать файл':
+      fileInputRef.value?.click()
+      break
+
+    default:
+      fileInputRef.value?.click()
+      break
+  }
 }
 
 async function handleFileInputChange(event: Event) {
-  fileRef.value = event.target.files?.[0] || fileRef.value
+  if (!event.target.files?.[0]) return
 
   try {
-    fileInputButtonSlot.value = 'Отменить'
+    fileRef.value = event.target.files[0]
+    fileInputButtonText.value = 'Отменить'
 
-    // TODO: add CancelablePromise
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    controller = new AbortController()
 
-    fileInputButtonSlot.value = 'Удалить'
+    // const data = new FormData()
+    // data.set('file', fileRef.value)
+    // await fetch(
+    //   '/media',
+    //   {
+    //     method: 'POST',
+    //     body: data
+    //   },
+    //   { signal: controller.signal }
+    // )
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(resolve, 2000)
+      controller.signal.addEventListener('abort', () => {
+        clearTimeout(timeout)
+        reject('Error message')
+      })
+    })
+
+    fileInputButtonText.value = 'Удалить'
   } catch (error) {
     fileInputHintText.value = error
   }
@@ -76,20 +124,18 @@ async function handleFileInputChange(event: Event) {
 
 <style scoped>
 /* TODO: replace with semantic colors */
-/* TODO: replace with flex, items-center, gap-2 */
-.selected-file-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.no-file-chosen {
-  color: #757575;
-}
-
 .hint-text {
   margin-top: 8px;
   font-size: 12px;
   color: #757575;
+}
+
+.disabled {
+  color: #9ca3b0;
+  pointer-events: none;
+}
+
+.error {
+  color: #ef4343;
 }
 </style>
