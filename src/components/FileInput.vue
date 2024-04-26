@@ -1,11 +1,13 @@
 <template>
   <div class="flex flex-col">
     <label class="pb-3">{{ label }}</label>
+
     <div class="flex gap-4 items-center">
       <input
         type="file"
         ref="fileInputRef"
-        @change="handleFileInputChange"
+        <!-- @ts-ignore -->
+        @change="handleFileInputChange($event.target?.files?.[0])"
         :accept="accept"
         :disabled="disabled"
         hidden
@@ -14,14 +16,18 @@
       <FileInputButton @click="handleFileInputButtonClick" :disabled="disabled">{{
         fileInputButtonText
       }}</FileInputButton>
+
       <div class="flex flex-row gap-2" :class="{ disabled }">
         <span v-if="fileInputButtonText === 'Отменить'" class="loader" />
+
         <div v-if="fileRef">
           <span>{{ fileRef.name }}</span>
         </div>
+
         <div v-else>{{ noFileChosenLabel }}</div>
       </div>
     </div>
+
     <p class="hint-text" :class="{ error: fileInputHintText === 'Error message' }">
       {{ fileInputHintText }}
     </p>
@@ -68,14 +74,14 @@ function handleFileInputButtonClick() {
     case 'Удалить':
       fileInputButtonText.value = 'Выбрать файл'
       fileRef.value = null
-      fileInputRef.value.value = null
+      fileInputRef.value && (fileInputRef.value.value = '')
       break
 
     case 'Отменить':
       controller.abort()
       fileInputButtonText.value = 'Выбрать файл'
       fileRef.value = null
-      fileInputRef.value.value = null
+      fileInputRef.value && (fileInputRef.value.value = '')
       break
 
     case 'Выбрать файл':
@@ -88,11 +94,10 @@ function handleFileInputButtonClick() {
   }
 }
 
-async function handleFileInputChange(event: Event) {
-  if (!event.target.files?.[0]) return
-
+async function handleFileInputChange(file?: File) {
+  if (!file) return
   try {
-    fileRef.value = event.target.files[0]
+    fileRef.value = file
     fileInputButtonText.value = 'Отменить'
 
     controller = new AbortController()
@@ -117,7 +122,7 @@ async function handleFileInputChange(event: Event) {
 
     fileInputButtonText.value = 'Удалить'
   } catch (error) {
-    fileInputHintText.value = error
+    if (typeof error === 'string') fileInputHintText.value = error
   }
 }
 </script>
