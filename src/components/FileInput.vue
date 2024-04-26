@@ -6,8 +6,10 @@
       <input
         type="file"
         ref="fileInputRef"
-        <!-- @vue-ignore -->
-        @change="handleFileInputChange($event.target?.files?.[0])"
+        @change="
+          // @ts-expect-error wtf it's Event and not InputEvent?
+          handleFileInputChange($event.target?.files?.[0])
+        "
         :accept="accept"
         :disabled="disabled"
         hidden
