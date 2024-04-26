@@ -6,7 +6,7 @@
       <input
         type="file"
         ref="fileInputRef"
-        <!-- @ts-ignore -->
+        <!-- @vue-ignore -->
         @change="handleFileInputChange($event.target?.files?.[0])"
         :accept="accept"
         :disabled="disabled"
